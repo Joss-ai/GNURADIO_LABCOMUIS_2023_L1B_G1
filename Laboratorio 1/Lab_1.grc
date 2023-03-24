@@ -53,7 +53,7 @@ blocks:
     bus_structure: null
     coordinate: [696, 20.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: frequency
   id: variable
   parameters:
@@ -65,7 +65,7 @@ blocks:
     bus_structure: null
     coordinate: [296, 12.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: frequency
   id: variable_qtgui_range
   parameters:
@@ -86,7 +86,7 @@ blocks:
     bus_structure: null
     coordinate: [512, 20.0]
     rotation: 0
-    state: disabled
+    state: enabled
 - name: samp_rate
   id: variable
   parameters:
@@ -99,12 +99,47 @@ blocks:
     coordinate: [184, 12]
     rotation: 0
     state: enabled
+- name: E3TRadio_amplificador_ff_0
+  id: E3TRadio_amplificador_ff
+  parameters:
+    Kamp: '5'
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [392, 228.0]
+    rotation: 0
+    state: true
+- name: analog_noise_source_x_0
+  id: analog_noise_source_x
+  parameters:
+    affinity: ''
+    alias: ''
+    amp: '0.5'
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    noise_type: analog.GR_GAUSSIAN
+    seed: '0'
+    type: float
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [24, 468.0]
+    rotation: 0
+    state: true
 - name: analog_sig_source_x_0
   id: analog_sig_source_x
   parameters:
     affinity: ''
     alias: ''
-    amp: '1'
+    amp: Amplitud
     comment: ''
     freq: frequency
     maxoutbuf: '0'
@@ -112,13 +147,56 @@ blocks:
     offset: '0'
     phase: '0'
     samp_rate: samp_rate
-    type: complex
+    type: float
     waveform: analog.GR_SIN_WAVE
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [72, 252.0]
+    coordinate: [8, 260.0]
+    rotation: 0
+    state: true
+- name: band_pass_filter_0
+  id: band_pass_filter
+  parameters:
+    affinity: ''
+    alias: ''
+    beta: '6.76'
+    comment: ''
+    decim: '1'
+    gain: '1'
+    high_cutoff_freq: '1900'
+    interp: '1'
+    low_cutoff_freq: '1500'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samp_rate: samp_rate
+    type: interp_fir_filter_fff
+    width: '100'
+    win: window.WIN_HAMMING
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [648, 244.0]
+    rotation: 0
+    state: true
+- name: blocks_add_xx_0
+  id: blocks_add_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_inputs: '2'
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [304, 392.0]
     rotation: 0
     state: true
 - name: blocks_throttle_0
@@ -131,13 +209,13 @@ blocks:
     maxoutbuf: '0'
     minoutbuf: '0'
     samples_per_second: samp_rate
-    type: complex
+    type: float
     vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [392, 292.0]
+    coordinate: [976, 300.0]
     rotation: 0
     state: true
 - name: qtgui_freq_sink_x_0
@@ -198,7 +276,7 @@ blocks:
     tr_level: '0.0'
     tr_mode: qtgui.TRIG_MODE_FREE
     tr_tag: '""'
-    type: complex
+    type: float
     units: dB
     update_time: '0.10'
     width1: '1'
@@ -218,7 +296,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [704, 388.0]
+    coordinate: [1288, 396.0]
     rotation: 0
     state: true
 - name: qtgui_time_sink_x_0
@@ -295,7 +373,7 @@ blocks:
     tr_mode: qtgui.TRIG_MODE_FREE
     tr_slope: qtgui.TRIG_SLOPE_POS
     tr_tag: '""'
-    type: complex
+    type: float
     update_time: '0.10'
     width1: '1'
     width10: '1'
@@ -315,12 +393,16 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [744, 172.0]
+    coordinate: [1288, 124.0]
     rotation: 0
     state: true
 
 connections:
-- [analog_sig_source_x_0, '0', blocks_throttle_0, '0']
+- [E3TRadio_amplificador_ff_0, '0', band_pass_filter_0, '0']
+- [analog_noise_source_x_0, '0', blocks_add_xx_0, '1']
+- [analog_sig_source_x_0, '0', blocks_add_xx_0, '0']
+- [band_pass_filter_0, '0', blocks_throttle_0, '0']
+- [blocks_add_xx_0, '0', E3TRadio_amplificador_ff_0, '0']
 - [blocks_throttle_0, '0', qtgui_freq_sink_x_0, '0']
 - [blocks_throttle_0, '0', qtgui_time_sink_x_0, '0']
 
