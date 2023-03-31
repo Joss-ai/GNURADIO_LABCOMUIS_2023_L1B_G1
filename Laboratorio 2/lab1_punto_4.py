@@ -6,6 +6,7 @@
 #
 # GNU Radio Python Flow Graph
 # Title: laboratorio 1b parte 2
+# Author: Jose_Algarin_Diego_Palencia_L1B_G1
 # GNU Radio version: 3.10.5.1
 
 from packaging.version import Version as StrictVersion
@@ -88,13 +89,13 @@ class lab1_punto_4(gr.top_block, Qt.QWidget):
         self._freq_win = RangeWidget(self._freq_range, self.set_freq, "frequency", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._freq_win)
         self.rational_resampler_xxx_2 = filter.rational_resampler_fff(
-                interpolation=8,
-                decimation=7,
+                interpolation=5,
+                decimation=1,
                 taps=[],
                 fractional_bw=0)
         self.rational_resampler_xxx_1 = filter.rational_resampler_fff(
                 interpolation=1,
-                decimation=8,
+                decimation=6,
                 taps=[],
                 fractional_bw=0)
         self.rational_resampler_xxx_0 = filter.rational_resampler_fff(

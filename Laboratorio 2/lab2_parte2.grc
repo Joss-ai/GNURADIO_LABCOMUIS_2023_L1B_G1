@@ -1,6 +1,6 @@
 options:
   parameters:
-    author: ''
+    author: Jose_Algarin_Diego_Palencia_L1B_G1
     catch_exceptions: 'True'
     category: '[GRC Hier Blocks]'
     cmake_opt: ''
@@ -28,7 +28,7 @@ options:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [8, 8]
+    coordinate: [16, 28.0]
     rotation: 0
     state: enabled
 
@@ -274,7 +274,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [152, 200.0]
+    coordinate: [48, 196.0]
     rotation: 0
     state: true
 - name: analog_sig_source_x_1
@@ -296,7 +296,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [152, 356.0]
+    coordinate: [48, 372.0]
     rotation: 0
     state: true
 - name: analog_sig_source_x_2
@@ -318,7 +318,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [160, 516.0]
+    coordinate: [40, 548.0]
     rotation: 0
     state: true
 - name: blocks_throttle_0
@@ -337,7 +337,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [776, 236.0]
+    coordinate: [560, 340.0]
     rotation: 0
     state: true
 - name: qtgui_freq_sink_x_0
@@ -418,7 +418,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1064, 488.0]
+    coordinate: [824, 336.0]
     rotation: 0
     state: true
 - name: qtgui_time_sink_x_0
@@ -515,7 +515,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1072, 212.0]
+    coordinate: [832, 208.0]
     rotation: 0
     state: true
 - name: rational_resampler_xxx_0
@@ -535,7 +535,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [512, 204.0]
+    coordinate: [384, 228.0]
     rotation: 0
     state: true
 - name: rational_resampler_xxx_1
@@ -544,7 +544,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    decim: '8'
+    decim: '6'
     fbw: '0'
     interp: '1'
     maxoutbuf: '0'
@@ -555,7 +555,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [512, 356.0]
+    coordinate: [384, 380.0]
     rotation: 0
     state: true
 - name: rational_resampler_xxx_2
@@ -564,9 +564,9 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    decim: '7'
+    decim: '1'
     fbw: '0'
-    interp: '8'
+    interp: '5'
     maxoutbuf: '0'
     minoutbuf: '0'
     taps: '[]'
@@ -575,7 +575,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [528, 516.0]
+    coordinate: [400, 540.0]
     rotation: 0
     state: true
 
