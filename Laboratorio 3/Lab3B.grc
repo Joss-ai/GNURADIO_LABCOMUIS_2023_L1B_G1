@@ -11,7 +11,7 @@ options:
     gen_linking: dynamic
     generate_options: qt_gui
     hier_block_src_path: '.:'
-    id: lab3A_2
+    id: Lab3B
     max_nouts: '0'
     output_language: python
     placement: (0,0)
@@ -22,7 +22,7 @@ options:
     run_options: prompt
     sizing_mode: fixed
     thread_safe_setters: ''
-    title: ConfiguracionUSRP
+    title: Modulador de amplitud
     window_size: (1000,1000)
   states:
     bus_sink: false
@@ -33,17 +33,59 @@ options:
     state: enabled
 
 blocks:
-- name: A
+- name: Ac
   id: variable_qtgui_range
   parameters:
     comment: ''
     gui_hint: ''
-    label: "Amplitud se\xF1al TX"
+    label: Amplitud portadora
     min_len: '200'
     orient: QtCore.Qt.Horizontal
     rangeType: float
     start: '0'
-    step: 100e-6
+    step: 1e-3
+    stop: '1'
+    value: 125e-3
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [416, 156.0]
+    rotation: 0
+    state: true
+- name: Am
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: ''
+    label: Amplitud del mensaje
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    rangeType: float
+    start: '0'
+    step: 100e-3
+    stop: '4'
+    value: '1'
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [224, 12.0]
+    rotation: 0
+    state: true
+- name: B
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: ''
+    label: Cambio de banda
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    rangeType: float
+    start: '-1'
+    step: '2'
     stop: '1'
     value: '1'
     widget: counter_slider
@@ -51,7 +93,28 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [632, 12.0]
+    coordinate: [224, 156.0]
+    rotation: 0
+    state: true
+- name: Fm
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: ''
+    label: Frecuencia del mensaje
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    rangeType: float
+    start: '300'
+    step: '100'
+    stop: samp_rate/4
+    value: 1e3
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [416, 12.0]
     rotation: 0
     state: true
 - name: GTX
@@ -59,7 +122,7 @@ blocks:
   parameters:
     comment: ''
     gui_hint: ''
-    label: Ganancia del TX
+    label: Ganancia del transmisor
     min_len: '200'
     orient: QtCore.Qt.Horizontal
     rangeType: float
@@ -72,7 +135,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [472, 12.0]
+    coordinate: [784, 156.0]
     rotation: 0
     state: true
 - name: fc
@@ -93,57 +156,79 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [312, 12.0]
+    coordinate: [608, 12.0]
+    rotation: 0
+    state: true
+- name: k
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: ''
+    label: Habilita portadora
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    rangeType: float
+    start: '0'
+    step: '1'
+    stop: '1'
+    value: '1'
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [608, 156.0]
     rotation: 0
     state: true
 - name: samp_rate
   id: variable
   parameters:
     comment: ''
-    value: 200e3
+    value: 12500000/8
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [184, 12]
+    coordinate: [8, 132.0]
     rotation: 0
     state: enabled
+- name: ModuladorAML1BG1_1
+  id: ModuladorAML1BG1
+  parameters:
+    Ac: Ac
+    affinity: ''
+    alias: ''
+    comment: ''
+    ka: k
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [424, 332.0]
+    rotation: 0
+    state: true
 - name: analog_sig_source_x_0
   id: analog_sig_source_x
   parameters:
     affinity: ''
     alias: ''
-    amp: A
+    amp: Am
     comment: ''
-    freq: '1000'
+    freq: Fm
     maxoutbuf: '0'
     minoutbuf: '0'
     offset: '0'
     phase: '0'
     samp_rate: samp_rate
     type: float
-    waveform: analog.GR_TRI_WAVE
+    waveform: analog.GR_SIN_WAVE
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [64, 228.0]
-    rotation: 0
-    state: true
-- name: blocks_float_to_complex_0
-  id: blocks_float_to_complex
-  parameters:
-    affinity: ''
-    alias: ''
-    comment: ''
-    maxoutbuf: '0'
-    minoutbuf: '0'
-    vlen: '1'
-  states:
-    bus_sink: false
-    bus_source: false
-    bus_structure: null
-    coordinate: [512, 328.0]
+    coordinate: [80, 340.0]
     rotation: 0
     state: true
 - name: lab3_Abloque_0
@@ -158,7 +243,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [504, 484.0]
+    coordinate: [448, 452.0]
     rotation: 0
     state: true
 - name: qtgui_freq_sink_x_0
@@ -239,7 +324,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [920, 452.0]
+    coordinate: [800, 420.0]
     rotation: 0
     state: true
 - name: qtgui_time_sink_x_0
@@ -336,7 +421,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [920, 340.0]
+    coordinate: [800, 316.0]
     rotation: 0
     state: true
 - name: uhd_usrp_sink_0
@@ -408,7 +493,7 @@ blocks:
     bw7: '0'
     bw8: '0'
     bw9: '0'
-    center_freq0: fc
+    center_freq0: '0'
     center_freq1: '0'
     center_freq10: '0'
     center_freq11: '0'
@@ -452,7 +537,7 @@ blocks:
     comment: ''
     dev_addr: '""'
     dev_args: ''
-    gain0: GTX
+    gain0: '0'
     gain1: '0'
     gain10: '0'
     gain11: '0'
@@ -613,16 +698,16 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [928, 132.0]
+    coordinate: [800, 524.0]
     rotation: 0
     state: true
 
 connections:
-- [analog_sig_source_x_0, '0', blocks_float_to_complex_0, '0']
+- [ModuladorAML1BG1_1, '0', qtgui_freq_sink_x_0, '0']
+- [ModuladorAML1BG1_1, '0', qtgui_time_sink_x_0, '0']
+- [ModuladorAML1BG1_1, '0', uhd_usrp_sink_0, '0']
+- [analog_sig_source_x_0, '0', ModuladorAML1BG1_1, '0']
 - [analog_sig_source_x_0, '0', lab3_Abloque_0, '0']
-- [blocks_float_to_complex_0, '0', qtgui_freq_sink_x_0, '0']
-- [blocks_float_to_complex_0, '0', qtgui_time_sink_x_0, '0']
-- [blocks_float_to_complex_0, '0', uhd_usrp_sink_0, '0']
 
 metadata:
   file_format: 1
