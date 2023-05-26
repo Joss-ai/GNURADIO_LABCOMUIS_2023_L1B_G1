@@ -43,9 +43,9 @@ blocks:
     orient: QtCore.Qt.Horizontal
     rangeType: float
     start: '0'
-    step: 1e-3
-    stop: '1'
-    value: 125e-3
+    step: '0.01'
+    stop: '0.5'
+    value: '0.25'
     widget: counter_slider
   states:
     bus_sink: false
@@ -64,9 +64,9 @@ blocks:
     orient: QtCore.Qt.Horizontal
     rangeType: float
     start: '0'
-    step: 100e-3
-    stop: '4'
-    value: '1'
+    step: 10e-3
+    stop: 500e-3
+    value: 250e-3
     widget: counter_slider
   states:
     bus_sink: false
@@ -105,9 +105,9 @@ blocks:
     min_len: '200'
     orient: QtCore.Qt.Horizontal
     rangeType: float
-    start: '300'
+    start: '0'
     step: '100'
-    stop: samp_rate/4
+    stop: '20000'
     value: 1e3
     widget: counter_slider
   states:
@@ -128,7 +128,7 @@ blocks:
     rangeType: float
     start: '0'
     step: '1'
-    stop: '30'
+    stop: '31'
     value: '0'
     widget: counter_slider
   states:
@@ -164,13 +164,13 @@ blocks:
   parameters:
     comment: ''
     gui_hint: ''
-    label: Habilita portadora
+    label: Conficiente de sensibilidad k
     min_len: '200'
     orient: QtCore.Qt.Horizontal
     rangeType: float
-    start: '0'
-    step: '1'
-    stop: '1'
+    start: '-4'
+    step: 10e-3
+    stop: '4'
     value: '1'
     widget: counter_slider
   states:
@@ -192,21 +192,21 @@ blocks:
     coordinate: [8, 132.0]
     rotation: 0
     state: enabled
-- name: ModuladorAML1BG1_1
-  id: ModuladorAML1BG1
+- name: EnvolventeCompleja_DSB_0
+  id: EnvolventeCompleja_DSB
   parameters:
-    Ac: Ac
+    Ac: '1'
     affinity: ''
     alias: ''
     comment: ''
-    ka: k
+    ka: '1'
     maxoutbuf: '0'
     minoutbuf: '0'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [424, 332.0]
+    coordinate: [528, 364.0]
     rotation: 0
     state: true
 - name: analog_sig_source_x_0
@@ -223,13 +223,29 @@ blocks:
     phase: '0'
     samp_rate: samp_rate
     type: float
-    waveform: analog.GR_SIN_WAVE
+    waveform: analog.GR_COS_WAVE
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [80, 340.0]
+    coordinate: [160, 332.0]
     rotation: 0
+    state: true
+- name: blocks_complex_to_real_0
+  id: blocks_complex_to_real
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [612.0, 512]
+    rotation: 270
     state: true
 - name: lab3_Abloque_0
   id: lab3_Abloque
@@ -243,7 +259,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [448, 452.0]
+    coordinate: [920, 708.0]
     rotation: 0
     state: true
 - name: qtgui_freq_sink_x_0
@@ -278,7 +294,7 @@ blocks:
     comment: ''
     ctrlpanel: 'False'
     fc: '0'
-    fftsize: '1024'
+    fftsize: '16384'
     freqhalf: 'True'
     grid: 'False'
     gui_hint: ''
@@ -324,7 +340,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [800, 420.0]
+    coordinate: [920, 452.0]
     rotation: 0
     state: true
 - name: qtgui_time_sink_x_0
@@ -421,7 +437,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [800, 316.0]
+    coordinate: [920, 348.0]
     rotation: 0
     state: true
 - name: uhd_usrp_sink_0
@@ -493,7 +509,7 @@ blocks:
     bw7: '0'
     bw8: '0'
     bw9: '0'
-    center_freq0: '0'
+    center_freq0: fc
     center_freq1: '0'
     center_freq10: '0'
     center_freq11: '0'
@@ -537,7 +553,7 @@ blocks:
     comment: ''
     dev_addr: '""'
     dev_args: ''
-    gain0: '0'
+    gain0: GTX
     gain1: '0'
     gain10: '0'
     gain11: '0'
@@ -698,16 +714,17 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [800, 524.0]
+    coordinate: [920, 556.0]
     rotation: 0
     state: true
 
 connections:
-- [ModuladorAML1BG1_1, '0', qtgui_freq_sink_x_0, '0']
-- [ModuladorAML1BG1_1, '0', qtgui_time_sink_x_0, '0']
-- [ModuladorAML1BG1_1, '0', uhd_usrp_sink_0, '0']
-- [analog_sig_source_x_0, '0', ModuladorAML1BG1_1, '0']
-- [analog_sig_source_x_0, '0', lab3_Abloque_0, '0']
+- [EnvolventeCompleja_DSB_0, '0', blocks_complex_to_real_0, '0']
+- [EnvolventeCompleja_DSB_0, '0', qtgui_freq_sink_x_0, '0']
+- [EnvolventeCompleja_DSB_0, '0', qtgui_time_sink_x_0, '0']
+- [EnvolventeCompleja_DSB_0, '0', uhd_usrp_sink_0, '0']
+- [analog_sig_source_x_0, '0', EnvolventeCompleja_DSB_0, '0']
+- [blocks_complex_to_real_0, '0', lab3_Abloque_0, '0']
 
 metadata:
   file_format: 1

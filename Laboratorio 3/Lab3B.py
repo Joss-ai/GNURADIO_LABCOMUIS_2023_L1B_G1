@@ -25,12 +25,13 @@ import os
 import sys
 sys.path.append(os.environ.get('GRC_HIER_PATH', os.path.expanduser('~/.grc_gnuradio')))
 
-from ModuladorAML1BG1 import ModuladorAML1BG1  # grc-generated hier_block
+from EnvolventeCompleja_DSB import EnvolventeCompleja_DSB  # grc-generated hier_block
 from PyQt5 import Qt
 from gnuradio import qtgui
 from gnuradio.filter import firdes
 import sip
 from gnuradio import analog
+from gnuradio import blocks
 from gnuradio import gr
 from gnuradio.fft import window
 import signal
@@ -89,26 +90,26 @@ class Lab3B(gr.top_block, Qt.QWidget):
         self.GTX = GTX = 0
         self.Fm = Fm = 1e3
         self.B = B = 1
-        self.Am = Am = 1
-        self.Ac = Ac = 125e-3
+        self.Am = Am = 250e-3
+        self.Ac = Ac = 0.25
 
         ##################################################
         # Blocks
         ##################################################
 
-        self._k_range = Range(0, 1, 1, 1, 200)
-        self._k_win = RangeWidget(self._k_range, self.set_k, "Habilita portadora", "counter_slider", float, QtCore.Qt.Horizontal)
-        self.top_layout.addWidget(self._k_win)
         self._fc_range = Range(50e6, 2.2e9, 1e6, 50e6, 200)
         self._fc_win = RangeWidget(self._fc_range, self.set_fc, "Frecuencia portadora", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._fc_win)
-        self._Fm_range = Range(300, samp_rate/4, 100, 1e3, 200)
+        self._GTX_range = Range(0, 31, 1, 0, 200)
+        self._GTX_win = RangeWidget(self._GTX_range, self.set_GTX, "Ganancia del transmisor", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._GTX_win)
+        self._Fm_range = Range(0, 20000, 100, 1e3, 200)
         self._Fm_win = RangeWidget(self._Fm_range, self.set_Fm, "Frecuencia del mensaje", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._Fm_win)
-        self._Am_range = Range(0, 4, 100e-3, 1, 200)
+        self._Am_range = Range(0, 500e-3, 10e-3, 250e-3, 200)
         self._Am_win = RangeWidget(self._Am_range, self.set_Am, "Amplitud del mensaje", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._Am_win)
-        self._Ac_range = Range(0, 1, 1e-3, 125e-3, 200)
+        self._Ac_range = Range(0, 0.5, 0.01, 0.25, 200)
         self._Ac_win = RangeWidget(self._Ac_range, self.set_Ac, "Amplitud portadora", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._Ac_win)
         self.uhd_usrp_sink_0 = uhd.usrp_sink(
@@ -123,9 +124,9 @@ class Lab3B(gr.top_block, Qt.QWidget):
         self.uhd_usrp_sink_0.set_samp_rate(samp_rate)
         self.uhd_usrp_sink_0.set_time_now(uhd.time_spec(time.time()), uhd.ALL_MBOARDS)
 
-        self.uhd_usrp_sink_0.set_center_freq(0, 0)
+        self.uhd_usrp_sink_0.set_center_freq(fc, 0)
         self.uhd_usrp_sink_0.set_antenna("TX/RX", 0)
-        self.uhd_usrp_sink_0.set_gain(0, 0)
+        self.uhd_usrp_sink_0.set_gain(GTX, 0)
         self.qtgui_time_sink_x_0 = qtgui.time_sink_c(
             1024, #size
             samp_rate, #samp_rate
@@ -178,7 +179,7 @@ class Lab3B(gr.top_block, Qt.QWidget):
         self._qtgui_time_sink_x_0_win = sip.wrapinstance(self.qtgui_time_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_time_sink_x_0_win)
         self.qtgui_freq_sink_x_0 = qtgui.freq_sink_c(
-            1024, #size
+            16384, #size
             window.WIN_BLACKMAN_hARRIS, #wintype
             0, #fc
             samp_rate, #bw
@@ -224,14 +225,15 @@ class Lab3B(gr.top_block, Qt.QWidget):
         )
 
         self.top_layout.addWidget(self.lab3_Abloque_0)
-        self.analog_sig_source_x_0 = analog.sig_source_f(samp_rate, analog.GR_SIN_WAVE, Fm, Am, 0, 0)
-        self.ModuladorAML1BG1_1 = ModuladorAML1BG1(
-            Ac=Ac,
-            ka=k,
+        self._k_range = Range(-4, 4, 10e-3, 1, 200)
+        self._k_win = RangeWidget(self._k_range, self.set_k, "Conficiente de sensibilidad k", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._k_win)
+        self.blocks_complex_to_real_0 = blocks.complex_to_real(1)
+        self.analog_sig_source_x_0 = analog.sig_source_f(samp_rate, analog.GR_COS_WAVE, Fm, Am, 0, 0)
+        self.EnvolventeCompleja_DSB_0 = EnvolventeCompleja_DSB(
+            Ac=1,
+            ka=1,
         )
-        self._GTX_range = Range(0, 30, 1, 0, 200)
-        self._GTX_win = RangeWidget(self._GTX_range, self.set_GTX, "Ganancia del transmisor", "counter_slider", float, QtCore.Qt.Horizontal)
-        self.top_layout.addWidget(self._GTX_win)
         self._B_range = Range(-1, 1, 2, 1, 200)
         self._B_win = RangeWidget(self._B_range, self.set_B, "Cambio de banda", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._B_win)
@@ -240,11 +242,12 @@ class Lab3B(gr.top_block, Qt.QWidget):
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.ModuladorAML1BG1_1, 0), (self.qtgui_freq_sink_x_0, 0))
-        self.connect((self.ModuladorAML1BG1_1, 0), (self.qtgui_time_sink_x_0, 0))
-        self.connect((self.ModuladorAML1BG1_1, 0), (self.uhd_usrp_sink_0, 0))
-        self.connect((self.analog_sig_source_x_0, 0), (self.ModuladorAML1BG1_1, 0))
-        self.connect((self.analog_sig_source_x_0, 0), (self.lab3_Abloque_0, 0))
+        self.connect((self.EnvolventeCompleja_DSB_0, 0), (self.blocks_complex_to_real_0, 0))
+        self.connect((self.EnvolventeCompleja_DSB_0, 0), (self.qtgui_freq_sink_x_0, 0))
+        self.connect((self.EnvolventeCompleja_DSB_0, 0), (self.qtgui_time_sink_x_0, 0))
+        self.connect((self.EnvolventeCompleja_DSB_0, 0), (self.uhd_usrp_sink_0, 0))
+        self.connect((self.analog_sig_source_x_0, 0), (self.EnvolventeCompleja_DSB_0, 0))
+        self.connect((self.blocks_complex_to_real_0, 0), (self.lab3_Abloque_0, 0))
 
 
     def closeEvent(self, event):
@@ -270,19 +273,20 @@ class Lab3B(gr.top_block, Qt.QWidget):
 
     def set_k(self, k):
         self.k = k
-        self.ModuladorAML1BG1_1.set_ka(self.k)
 
     def get_fc(self):
         return self.fc
 
     def set_fc(self, fc):
         self.fc = fc
+        self.uhd_usrp_sink_0.set_center_freq(self.fc, 0)
 
     def get_GTX(self):
         return self.GTX
 
     def set_GTX(self, GTX):
         self.GTX = GTX
+        self.uhd_usrp_sink_0.set_gain(self.GTX, 0)
 
     def get_Fm(self):
         return self.Fm
@@ -309,7 +313,6 @@ class Lab3B(gr.top_block, Qt.QWidget):
 
     def set_Ac(self, Ac):
         self.Ac = Ac
-        self.ModuladorAML1BG1_1.set_Ac(self.Ac)
 
 
 
