@@ -1,8 +1,8 @@
 options:
   parameters:
-    author: Jose_Algarin_Diego_Palencia
+    author: David_Suarez
     catch_exceptions: 'True'
-    category: '[Modulos_L1BG1]'
+    category: '[Modulos_J1EG1]'
     cmake_opt: ''
     comment: ''
     copyright: ''
