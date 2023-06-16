@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-3.0
 #
 # GNU Radio Python Flow Graph
-# Title: Modulador PM L1BG1
+# Title: Modulacion PAM L1BG1
 # Author: Jose_Algarin_Diego_Palencia
 # Copyright: UIS
 # GNU Radio version: 3.10.5.1
@@ -26,7 +26,7 @@ import os
 import sys
 sys.path.append(os.environ.get('GRC_HIER_PATH', os.path.expanduser('~/.grc_gnuradio')))
 
-from EnvolventeComplejaPM import EnvolventeComplejaPM  # grc-generated hier_block
+from Modulacion_PAM_L1BG1 import Modulacion_PAM_L1BG1  # grc-generated hier_block
 from PyQt5 import Qt
 from gnuradio import qtgui
 from gnuradio.filter import firdes
@@ -38,8 +38,6 @@ import signal
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
-from gnuradio import uhd
-import time
 from gnuradio.qtgui import Range, RangeWidget
 from PyQt5 import QtCore
 
@@ -47,12 +45,12 @@ from PyQt5 import QtCore
 
 from gnuradio import qtgui
 
-class ModulacionPM(gr.top_block, Qt.QWidget):
+class PruebaPAM_L1BG1(gr.top_block, Qt.QWidget):
 
     def __init__(self):
-        gr.top_block.__init__(self, "Modulador PM L1BG1", catch_exceptions=True)
+        gr.top_block.__init__(self, "Modulacion PAM L1BG1", catch_exceptions=True)
         Qt.QWidget.__init__(self)
-        self.setWindowTitle("Modulador PM L1BG1")
+        self.setWindowTitle("Modulacion PAM L1BG1")
         qtgui.util.check_set_qss()
         try:
             self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
@@ -70,7 +68,7 @@ class ModulacionPM(gr.top_block, Qt.QWidget):
         self.top_grid_layout = Qt.QGridLayout()
         self.top_layout.addLayout(self.top_grid_layout)
 
-        self.settings = Qt.QSettings("GNU Radio", "ModulacionPM")
+        self.settings = Qt.QSettings("GNU Radio", "PruebaPAM_L1BG1")
 
         try:
             if StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
@@ -83,56 +81,33 @@ class ModulacionPM(gr.top_block, Qt.QWidget):
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = 12.5e6
-        self.kp = kp = 1
-        self.fm = fm = 1e3
-        self.fc = fc = 50e6
-        self.GTX = GTX = 1
+        self.samp_rate = samp_rate = 100000
+        self.fs = fs = 1e3
+        self.fm = fm = 100
+        self.D = D = 10
         self.Am = Am = 1
-        self.Ac = Ac = 1
 
         ##################################################
         # Blocks
         ##################################################
 
-        self._kp_range = Range(0, 100, 1e-2, 1, 200)
-        self._kp_win = RangeWidget(self._kp_range, self.set_kp, "Coeficiente Kp", "counter_slider", float, QtCore.Qt.Horizontal)
-        self.top_layout.addWidget(self._kp_win)
-        self._fm_range = Range(1e3, 20e3, 100, 1e3, 200)
+        self._fs_range = Range(0, 10e3, 1, 1e3, 200)
+        self._fs_win = RangeWidget(self._fs_range, self.set_fs, "Frecuencia pulsos", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._fs_win)
+        self._fm_range = Range(0, 10e3, 100, 100, 200)
         self._fm_win = RangeWidget(self._fm_range, self.set_fm, "Frecuencia del mensaje", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._fm_win)
-        self._fc_range = Range(50e6, 2e9, 1e6, 50e6, 200)
-        self._fc_win = RangeWidget(self._fc_range, self.set_fc, "Frecuencia de la portadora", "counter_slider", float, QtCore.Qt.Horizontal)
-        self.top_layout.addWidget(self._fc_win)
-        self._GTX_range = Range(0, 30, 1, 1, 200)
-        self._GTX_win = RangeWidget(self._GTX_range, self.set_GTX, "Ganancia del transmisor", "counter_slider", float, QtCore.Qt.Horizontal)
-        self.top_layout.addWidget(self._GTX_win)
-        self._Am_range = Range(0, 1, 1e-6, 1, 200)
+        self._D_range = Range(0, 50, 1, 10, 200)
+        self._D_win = RangeWidget(self._D_range, self.set_D, "Ancho Pulso", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._D_win)
+        self._Am_range = Range(0, 10, 100e-3, 1, 200)
         self._Am_win = RangeWidget(self._Am_range, self.set_Am, "Amplitud del mensaje", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._Am_win)
-        self._Ac_range = Range(0, 1, 1e-6, 1, 200)
-        self._Ac_win = RangeWidget(self._Ac_range, self.set_Ac, "Amplitud de la portadora", "counter_slider", float, QtCore.Qt.Horizontal)
-        self.top_layout.addWidget(self._Ac_win)
-        self.uhd_usrp_sink_0 = uhd.usrp_sink(
-            ",".join(("", '')),
-            uhd.stream_args(
-                cpu_format="fc32",
-                args='',
-                channels=list(range(0,1)),
-            ),
-            "",
-        )
-        self.uhd_usrp_sink_0.set_samp_rate(samp_rate)
-        self.uhd_usrp_sink_0.set_time_now(uhd.time_spec(time.time()), uhd.ALL_MBOARDS)
-
-        self.uhd_usrp_sink_0.set_center_freq(fc, 0)
-        self.uhd_usrp_sink_0.set_antenna("TX/RX", 0)
-        self.uhd_usrp_sink_0.set_gain(GTX, 0)
-        self.qtgui_time_sink_x_0 = qtgui.time_sink_c(
+        self.qtgui_time_sink_x_0 = qtgui.time_sink_f(
             1024, #size
             samp_rate, #samp_rate
             "", #name
-            1, #number of inputs
+            2, #number of inputs
             None # parent
         )
         self.qtgui_time_sink_x_0.set_update_time(0.10)
@@ -165,10 +140,7 @@ class ModulacionPM(gr.top_block, Qt.QWidget):
 
         for i in range(2):
             if len(labels[i]) == 0:
-                if (i % 2 == 0):
-                    self.qtgui_time_sink_x_0.set_line_label(i, "Re{{Data {0}}}".format(i/2))
-                else:
-                    self.qtgui_time_sink_x_0.set_line_label(i, "Im{{Data {0}}}".format(i/2))
+                self.qtgui_time_sink_x_0.set_line_label(i, "Data {0}".format(i))
             else:
                 self.qtgui_time_sink_x_0.set_line_label(i, labels[i])
             self.qtgui_time_sink_x_0.set_line_width(i, widths[i])
@@ -179,66 +151,24 @@ class ModulacionPM(gr.top_block, Qt.QWidget):
 
         self._qtgui_time_sink_x_0_win = sip.wrapinstance(self.qtgui_time_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_time_sink_x_0_win)
-        self.qtgui_freq_sink_x_0 = qtgui.freq_sink_c(
-            8192, #size
-            window.WIN_BLACKMAN_hARRIS, #wintype
-            0, #fc
-            samp_rate, #bw
-            "", #name
-            1,
-            None # parent
-        )
-        self.qtgui_freq_sink_x_0.set_update_time(0.10)
-        self.qtgui_freq_sink_x_0.set_y_axis((-140), 10)
-        self.qtgui_freq_sink_x_0.set_y_label('Relative Gain', 'dB')
-        self.qtgui_freq_sink_x_0.set_trigger_mode(qtgui.TRIG_MODE_FREE, 0.0, 0, "")
-        self.qtgui_freq_sink_x_0.enable_autoscale(False)
-        self.qtgui_freq_sink_x_0.enable_grid(False)
-        self.qtgui_freq_sink_x_0.set_fft_average(1.0)
-        self.qtgui_freq_sink_x_0.enable_axis_labels(True)
-        self.qtgui_freq_sink_x_0.enable_control_panel(False)
-        self.qtgui_freq_sink_x_0.set_fft_window_normalized(False)
-
-
-
-        labels = ['', '', '', '', '',
-            '', '', '', '', '']
-        widths = [1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1]
-        colors = ["blue", "red", "green", "black", "cyan",
-            "magenta", "yellow", "dark red", "dark green", "dark blue"]
-        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0, 1.0]
-
-        for i in range(1):
-            if len(labels[i]) == 0:
-                self.qtgui_freq_sink_x_0.set_line_label(i, "Data {0}".format(i))
-            else:
-                self.qtgui_freq_sink_x_0.set_line_label(i, labels[i])
-            self.qtgui_freq_sink_x_0.set_line_width(i, widths[i])
-            self.qtgui_freq_sink_x_0.set_line_color(i, colors[i])
-            self.qtgui_freq_sink_x_0.set_line_alpha(i, alphas[i])
-
-        self._qtgui_freq_sink_x_0_win = sip.wrapinstance(self.qtgui_freq_sink_x_0.qwidget(), Qt.QWidget)
-        self.top_layout.addWidget(self._qtgui_freq_sink_x_0_win)
         self.analog_sig_source_x_0 = analog.sig_source_f(samp_rate, analog.GR_COS_WAVE, fm, Am, 0, 0)
-        self.EnvolventeComplejaPM_0 = EnvolventeComplejaPM(
-            Ac=Ac,
-            kp=kp,
+        self.Modulacion_PAM_L1BG1_0 = Modulacion_PAM_L1BG1(
+            D=D,
+            fs=fs,
+            samp_rate=samp_rate,
         )
 
 
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.EnvolventeComplejaPM_0, 0), (self.qtgui_freq_sink_x_0, 0))
-        self.connect((self.EnvolventeComplejaPM_0, 0), (self.qtgui_time_sink_x_0, 0))
-        self.connect((self.EnvolventeComplejaPM_0, 0), (self.uhd_usrp_sink_0, 0))
-        self.connect((self.analog_sig_source_x_0, 0), (self.EnvolventeComplejaPM_0, 0))
+        self.connect((self.Modulacion_PAM_L1BG1_0, 0), (self.qtgui_time_sink_x_0, 0))
+        self.connect((self.analog_sig_source_x_0, 0), (self.Modulacion_PAM_L1BG1_0, 0))
+        self.connect((self.analog_sig_source_x_0, 0), (self.qtgui_time_sink_x_0, 1))
 
 
     def closeEvent(self, event):
-        self.settings = Qt.QSettings("GNU Radio", "ModulacionPM")
+        self.settings = Qt.QSettings("GNU Radio", "PruebaPAM_L1BG1")
         self.settings.setValue("geometry", self.saveGeometry())
         self.stop()
         self.wait()
@@ -250,17 +180,16 @@ class ModulacionPM(gr.top_block, Qt.QWidget):
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
+        self.Modulacion_PAM_L1BG1_0.set_samp_rate(self.samp_rate)
         self.analog_sig_source_x_0.set_sampling_freq(self.samp_rate)
-        self.qtgui_freq_sink_x_0.set_frequency_range(0, self.samp_rate)
         self.qtgui_time_sink_x_0.set_samp_rate(self.samp_rate)
-        self.uhd_usrp_sink_0.set_samp_rate(self.samp_rate)
 
-    def get_kp(self):
-        return self.kp
+    def get_fs(self):
+        return self.fs
 
-    def set_kp(self, kp):
-        self.kp = kp
-        self.EnvolventeComplejaPM_0.set_kp(self.kp)
+    def set_fs(self, fs):
+        self.fs = fs
+        self.Modulacion_PAM_L1BG1_0.set_fs(self.fs)
 
     def get_fm(self):
         return self.fm
@@ -269,19 +198,12 @@ class ModulacionPM(gr.top_block, Qt.QWidget):
         self.fm = fm
         self.analog_sig_source_x_0.set_frequency(self.fm)
 
-    def get_fc(self):
-        return self.fc
+    def get_D(self):
+        return self.D
 
-    def set_fc(self, fc):
-        self.fc = fc
-        self.uhd_usrp_sink_0.set_center_freq(self.fc, 0)
-
-    def get_GTX(self):
-        return self.GTX
-
-    def set_GTX(self, GTX):
-        self.GTX = GTX
-        self.uhd_usrp_sink_0.set_gain(self.GTX, 0)
+    def set_D(self, D):
+        self.D = D
+        self.Modulacion_PAM_L1BG1_0.set_D(self.D)
 
     def get_Am(self):
         return self.Am
@@ -290,17 +212,10 @@ class ModulacionPM(gr.top_block, Qt.QWidget):
         self.Am = Am
         self.analog_sig_source_x_0.set_amplitude(self.Am)
 
-    def get_Ac(self):
-        return self.Ac
-
-    def set_Ac(self, Ac):
-        self.Ac = Ac
-        self.EnvolventeComplejaPM_0.set_Ac(self.Ac)
 
 
 
-
-def main(top_block_cls=ModulacionPM, options=None):
+def main(top_block_cls=PruebaPAM_L1BG1, options=None):
 
     if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
         style = gr.prefs().get_string('qtgui', 'style', 'raster')

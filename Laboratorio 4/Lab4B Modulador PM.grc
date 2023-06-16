@@ -171,21 +171,21 @@ blocks:
     coordinate: [48, 156.0]
     rotation: 0
     state: enabled
-- name: Envolvente_compleja_PM_0
-  id: Envolvente_compleja_PM
+- name: EnvolventeComplejaPM_0
+  id: EnvolventeComplejaPM
   parameters:
-    AC: Am
-    Kp: kp
+    Ac: Ac
     affinity: ''
     alias: ''
     comment: ''
+    kp: kp
     maxoutbuf: '0'
     minoutbuf: '0'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [448, 428.0]
+    coordinate: [416, 428.0]
     rotation: 0
     state: true
 - name: analog_sig_source_x_0
@@ -667,10 +667,10 @@ blocks:
     state: true
 
 connections:
-- [Envolvente_compleja_PM_0, '0', qtgui_freq_sink_x_0, '0']
-- [Envolvente_compleja_PM_0, '0', qtgui_time_sink_x_0, '0']
-- [Envolvente_compleja_PM_0, '0', uhd_usrp_sink_0, '0']
-- [analog_sig_source_x_0, '0', Envolvente_compleja_PM_0, '0']
+- [EnvolventeComplejaPM_0, '0', qtgui_freq_sink_x_0, '0']
+- [EnvolventeComplejaPM_0, '0', qtgui_time_sink_x_0, '0']
+- [EnvolventeComplejaPM_0, '0', uhd_usrp_sink_0, '0']
+- [analog_sig_source_x_0, '0', EnvolventeComplejaPM_0, '0']
 
 metadata:
   file_format: 1
