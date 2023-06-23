@@ -33,12 +33,15 @@ from gnuradio.filter import firdes
 import sip
 from gnuradio import analog
 from gnuradio import blocks
+from gnuradio import filter
 from gnuradio import gr
 from gnuradio.fft import window
 import signal
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
+from gnuradio import uhd
+import time
 from gnuradio.qtgui import Range, RangeWidget
 from PyQt5 import QtCore
 
@@ -85,6 +88,9 @@ class MultiplexPAM(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate = 100000
         self.fs = fs = 1e3
         self.fm = fm = 100
+        self.fcorte = fcorte = 100
+        self.D5 = D5 = 0
+        self.D4 = D4 = 0
         self.D3 = D3 = 0
         self.D2 = D2 = 0
         self.D1 = D1 = 0
@@ -101,6 +107,15 @@ class MultiplexPAM(gr.top_block, Qt.QWidget):
         self._fm_range = Range(0, 10e3, 10, 100, 200)
         self._fm_win = RangeWidget(self._fm_range, self.set_fm, "Frecuencia del mensaje", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._fm_win)
+        self._fcorte_range = Range(100, 1e6, 100, 100, 200)
+        self._fcorte_win = RangeWidget(self._fcorte_range, self.set_fcorte, "Frecuencia de corte", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._fcorte_win)
+        self._D5_range = Range(0, 100, 1, 0, 200)
+        self._D5_win = RangeWidget(self._D5_range, self.set_D5, "Seleccionador señal RX", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._D5_win)
+        self._D4_range = Range(0, 100, 1, 0, 200)
+        self._D4_win = RangeWidget(self._D4_range, self.set_D4, "Retardo 4", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._D4_win)
         self._D3_range = Range(0, 100, 1, 0, 200)
         self._D3_win = RangeWidget(self._D3_range, self.set_D3, "Retardo 3", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._D3_win)
@@ -116,11 +131,79 @@ class MultiplexPAM(gr.top_block, Qt.QWidget):
         self._Am_range = Range(0, 10, 100e-3, 1, 200)
         self._Am_win = RangeWidget(self._Am_range, self.set_Am, "Amplitud del mensaje", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._Am_win)
+        self.uhd_usrp_sink_0 = uhd.usrp_sink(
+            ",".join(("", '')),
+            uhd.stream_args(
+                cpu_format="fc32",
+                args='',
+                channels=list(range(0,1)),
+            ),
+            "",
+        )
+        self.uhd_usrp_sink_0.set_samp_rate((samp_rate*2))
+        self.uhd_usrp_sink_0.set_time_now(uhd.time_spec(time.time()), uhd.ALL_MBOARDS)
+
+        self.uhd_usrp_sink_0.set_center_freq(50000000, 0)
+        self.uhd_usrp_sink_0.set_antenna("TX/RX", 0)
+        self.uhd_usrp_sink_0.set_gain(0, 0)
+        self.rational_resampler_xxx_0 = filter.rational_resampler_fcc(
+                interpolation=2,
+                decimation=1,
+                taps=[],
+                fractional_bw=0)
+        self.qtgui_time_sink_x_0_0 = qtgui.time_sink_f(
+            (1024*8), #size
+            samp_rate, #samp_rate
+            "", #name
+            2, #number of inputs
+            None # parent
+        )
+        self.qtgui_time_sink_x_0_0.set_update_time(0.10)
+        self.qtgui_time_sink_x_0_0.set_y_axis(-1, 1)
+
+        self.qtgui_time_sink_x_0_0.set_y_label('Amplitude', "")
+
+        self.qtgui_time_sink_x_0_0.enable_tags(True)
+        self.qtgui_time_sink_x_0_0.set_trigger_mode(qtgui.TRIG_MODE_FREE, qtgui.TRIG_SLOPE_POS, 0.0, 0, 0, "")
+        self.qtgui_time_sink_x_0_0.enable_autoscale(False)
+        self.qtgui_time_sink_x_0_0.enable_grid(False)
+        self.qtgui_time_sink_x_0_0.enable_axis_labels(True)
+        self.qtgui_time_sink_x_0_0.enable_control_panel(False)
+        self.qtgui_time_sink_x_0_0.enable_stem_plot(False)
+
+
+        labels = ['Signal 1', 'Signal 2', 'Signal 3', 'Signal 4', 'Signal 5',
+            'Signal 6', 'Signal 7', 'Signal 8', 'Signal 9', 'Signal 10']
+        widths = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+        colors = ['blue', 'red', 'green', 'black', 'cyan',
+            'magenta', 'yellow', 'dark red', 'dark green', 'dark blue']
+        alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0, 1.0]
+        styles = [1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1]
+        markers = [-1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1]
+
+
+        for i in range(2):
+            if len(labels[i]) == 0:
+                self.qtgui_time_sink_x_0_0.set_line_label(i, "Data {0}".format(i))
+            else:
+                self.qtgui_time_sink_x_0_0.set_line_label(i, labels[i])
+            self.qtgui_time_sink_x_0_0.set_line_width(i, widths[i])
+            self.qtgui_time_sink_x_0_0.set_line_color(i, colors[i])
+            self.qtgui_time_sink_x_0_0.set_line_style(i, styles[i])
+            self.qtgui_time_sink_x_0_0.set_line_marker(i, markers[i])
+            self.qtgui_time_sink_x_0_0.set_line_alpha(i, alphas[i])
+
+        self._qtgui_time_sink_x_0_0_win = sip.wrapinstance(self.qtgui_time_sink_x_0_0.qwidget(), Qt.QWidget)
+        self.top_layout.addWidget(self._qtgui_time_sink_x_0_0_win)
         self.qtgui_time_sink_x_0 = qtgui.time_sink_f(
             1024, #size
             samp_rate, #samp_rate
             "", #name
-            5, #number of inputs
+            6, #number of inputs
             None # parent
         )
         self.qtgui_time_sink_x_0.set_update_time(0.10)
@@ -151,7 +234,7 @@ class MultiplexPAM(gr.top_block, Qt.QWidget):
             -1, -1, -1, -1, -1]
 
 
-        for i in range(5):
+        for i in range(6):
             if len(labels[i]) == 0:
                 self.qtgui_time_sink_x_0.set_line_label(i, "Data {0}".format(i))
             else:
@@ -164,14 +247,37 @@ class MultiplexPAM(gr.top_block, Qt.QWidget):
 
         self._qtgui_time_sink_x_0_win = sip.wrapinstance(self.qtgui_time_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_time_sink_x_0_win)
+        self.low_pass_filter_0 = filter.fir_filter_fff(
+            1,
+            firdes.low_pass(
+                4,
+                samp_rate,
+                fcorte,
+                1000,
+                window.WIN_HAMMING,
+                6.76))
+        self.blocks_wavfile_source_0 = blocks.wavfile_source('/home/labcom/Documentos/Jose_Diego_comu1/Laboratorio 3/26 De Mayo, Diomedes Díaz - Letra Oficial.wav', True)
+        self.blocks_multiply_const_vxx_0 = blocks.multiply_const_ff(1.5)
+        self.blocks_delay_3 = blocks.delay(gr.sizeof_float*1, D5)
+        self.blocks_delay_2_0 = blocks.delay(gr.sizeof_float*1, D4)
         self.blocks_delay_2 = blocks.delay(gr.sizeof_float*1, D3)
         self.blocks_delay_1 = blocks.delay(gr.sizeof_float*1, D2)
         self.blocks_delay_0 = blocks.delay(gr.sizeof_float*1, D1)
         self.blocks_add_xx_0 = blocks.add_vff(1)
-        self.analog_sig_source_x_3 = analog.sig_source_f(samp_rate, analog.GR_COS_WAVE, fm, Am, 0, 0)
-        self.analog_sig_source_x_2 = analog.sig_source_f(samp_rate, analog.GR_COS_WAVE, fm, Am, 0, 0)
-        self.analog_sig_source_x_1 = analog.sig_source_f(samp_rate, analog.GR_COS_WAVE, fm, Am, 0, 0)
+        self.analog_sig_source_x_3 = analog.sig_source_f(samp_rate, analog.GR_SQR_WAVE, fm, Am, 0, 0)
+        self.analog_sig_source_x_2 = analog.sig_source_f(samp_rate, analog.GR_TRI_WAVE, fm, Am, 0, 0)
+        self.analog_sig_source_x_1 = analog.sig_source_f(samp_rate, analog.GR_SAW_WAVE, fm, Am, 0, 0)
         self.analog_sig_source_x_0 = analog.sig_source_f(samp_rate, analog.GR_COS_WAVE, fm, Am, 0, 0)
+        self.Modulacion_PAM_L1BG1_1 = Modulacion_PAM_L1BG1(
+            D=D,
+            fs=fs,
+            samp_rate=samp_rate,
+        )
+        self.Modulacion_PAM_L1BG1_0_2_0 = Modulacion_PAM_L1BG1(
+            D=D,
+            fs=fs,
+            samp_rate=samp_rate,
+        )
         self.Modulacion_PAM_L1BG1_0_2 = Modulacion_PAM_L1BG1(
             D=D,
             fs=fs,
@@ -202,17 +308,29 @@ class MultiplexPAM(gr.top_block, Qt.QWidget):
         self.connect((self.Modulacion_PAM_L1BG1_0_0, 0), (self.blocks_delay_0, 0))
         self.connect((self.Modulacion_PAM_L1BG1_0_1, 0), (self.blocks_delay_1, 0))
         self.connect((self.Modulacion_PAM_L1BG1_0_2, 0), (self.blocks_delay_2, 0))
+        self.connect((self.Modulacion_PAM_L1BG1_0_2_0, 0), (self.blocks_multiply_const_vxx_0, 0))
+        self.connect((self.Modulacion_PAM_L1BG1_1, 0), (self.low_pass_filter_0, 0))
+        self.connect((self.Modulacion_PAM_L1BG1_1, 0), (self.rational_resampler_xxx_0, 0))
         self.connect((self.analog_sig_source_x_0, 0), (self.Modulacion_PAM_L1BG1_0, 0))
         self.connect((self.analog_sig_source_x_1, 0), (self.Modulacion_PAM_L1BG1_0_2, 0))
         self.connect((self.analog_sig_source_x_2, 0), (self.Modulacion_PAM_L1BG1_0_1, 0))
         self.connect((self.analog_sig_source_x_3, 0), (self.Modulacion_PAM_L1BG1_0_0, 0))
-        self.connect((self.blocks_add_xx_0, 0), (self.qtgui_time_sink_x_0, 4))
+        self.connect((self.blocks_add_xx_0, 0), (self.blocks_delay_3, 0))
+        self.connect((self.blocks_add_xx_0, 0), (self.qtgui_time_sink_x_0, 5))
         self.connect((self.blocks_delay_0, 0), (self.blocks_add_xx_0, 1))
         self.connect((self.blocks_delay_0, 0), (self.qtgui_time_sink_x_0, 1))
         self.connect((self.blocks_delay_1, 0), (self.blocks_add_xx_0, 2))
         self.connect((self.blocks_delay_1, 0), (self.qtgui_time_sink_x_0, 2))
         self.connect((self.blocks_delay_2, 0), (self.blocks_add_xx_0, 3))
         self.connect((self.blocks_delay_2, 0), (self.qtgui_time_sink_x_0, 3))
+        self.connect((self.blocks_delay_2_0, 0), (self.blocks_add_xx_0, 4))
+        self.connect((self.blocks_delay_2_0, 0), (self.qtgui_time_sink_x_0, 4))
+        self.connect((self.blocks_delay_3, 0), (self.Modulacion_PAM_L1BG1_1, 0))
+        self.connect((self.blocks_delay_3, 0), (self.qtgui_time_sink_x_0_0, 0))
+        self.connect((self.blocks_multiply_const_vxx_0, 0), (self.blocks_delay_2_0, 0))
+        self.connect((self.blocks_wavfile_source_0, 0), (self.Modulacion_PAM_L1BG1_0_2_0, 0))
+        self.connect((self.low_pass_filter_0, 0), (self.qtgui_time_sink_x_0_0, 1))
+        self.connect((self.rational_resampler_xxx_0, 0), (self.uhd_usrp_sink_0, 0))
 
 
     def closeEvent(self, event):
@@ -232,11 +350,16 @@ class MultiplexPAM(gr.top_block, Qt.QWidget):
         self.Modulacion_PAM_L1BG1_0_0.set_samp_rate(self.samp_rate)
         self.Modulacion_PAM_L1BG1_0_1.set_samp_rate(self.samp_rate)
         self.Modulacion_PAM_L1BG1_0_2.set_samp_rate(self.samp_rate)
+        self.Modulacion_PAM_L1BG1_0_2_0.set_samp_rate(self.samp_rate)
+        self.Modulacion_PAM_L1BG1_1.set_samp_rate(self.samp_rate)
         self.analog_sig_source_x_0.set_sampling_freq(self.samp_rate)
         self.analog_sig_source_x_1.set_sampling_freq(self.samp_rate)
         self.analog_sig_source_x_2.set_sampling_freq(self.samp_rate)
         self.analog_sig_source_x_3.set_sampling_freq(self.samp_rate)
+        self.low_pass_filter_0.set_taps(firdes.low_pass(4, self.samp_rate, self.fcorte, 1000, window.WIN_HAMMING, 6.76))
         self.qtgui_time_sink_x_0.set_samp_rate(self.samp_rate)
+        self.qtgui_time_sink_x_0_0.set_samp_rate(self.samp_rate)
+        self.uhd_usrp_sink_0.set_samp_rate((self.samp_rate*2))
 
     def get_fs(self):
         return self.fs
@@ -247,6 +370,8 @@ class MultiplexPAM(gr.top_block, Qt.QWidget):
         self.Modulacion_PAM_L1BG1_0_0.set_fs(self.fs)
         self.Modulacion_PAM_L1BG1_0_1.set_fs(self.fs)
         self.Modulacion_PAM_L1BG1_0_2.set_fs(self.fs)
+        self.Modulacion_PAM_L1BG1_0_2_0.set_fs(self.fs)
+        self.Modulacion_PAM_L1BG1_1.set_fs(self.fs)
 
     def get_fm(self):
         return self.fm
@@ -257,6 +382,27 @@ class MultiplexPAM(gr.top_block, Qt.QWidget):
         self.analog_sig_source_x_1.set_frequency(self.fm)
         self.analog_sig_source_x_2.set_frequency(self.fm)
         self.analog_sig_source_x_3.set_frequency(self.fm)
+
+    def get_fcorte(self):
+        return self.fcorte
+
+    def set_fcorte(self, fcorte):
+        self.fcorte = fcorte
+        self.low_pass_filter_0.set_taps(firdes.low_pass(4, self.samp_rate, self.fcorte, 1000, window.WIN_HAMMING, 6.76))
+
+    def get_D5(self):
+        return self.D5
+
+    def set_D5(self, D5):
+        self.D5 = D5
+        self.blocks_delay_3.set_dly(int(self.D5))
+
+    def get_D4(self):
+        return self.D4
+
+    def set_D4(self, D4):
+        self.D4 = D4
+        self.blocks_delay_2_0.set_dly(int(self.D4))
 
     def get_D3(self):
         return self.D3
@@ -288,6 +434,8 @@ class MultiplexPAM(gr.top_block, Qt.QWidget):
         self.Modulacion_PAM_L1BG1_0_0.set_D(self.D)
         self.Modulacion_PAM_L1BG1_0_1.set_D(self.D)
         self.Modulacion_PAM_L1BG1_0_2.set_D(self.D)
+        self.Modulacion_PAM_L1BG1_0_2_0.set_D(self.D)
+        self.Modulacion_PAM_L1BG1_1.set_D(self.D)
 
     def get_Am(self):
         return self.Am

@@ -5,8 +5,8 @@
 # SPDX-License-Identifier: GPL-3.0
 #
 # GNU Radio Python Flow Graph
-# Title: Modulacion PAM L1BG1
-# Author: Jose_Algarin_Diego_Palencia
+# Title: Modulador PWM L1BG1
+# Author: Jose_Algarin_Diego_Palenci
 # Copyright: UIS
 # GNU Radio version: 3.10.5.1
 
@@ -22,20 +22,15 @@ if __name__ == '__main__':
         except:
             print("Warning: failed to XInitThreads()")
 
-import os
-import sys
-sys.path.append(os.environ.get('GRC_HIER_PATH', os.path.expanduser('~/.grc_gnuradio')))
-
-from Modulacion_PAM_L1BG1 import Modulacion_PAM_L1BG1  # grc-generated hier_block
 from PyQt5 import Qt
 from gnuradio import qtgui
 from gnuradio.filter import firdes
 import sip
 from gnuradio import analog
 from gnuradio import blocks
-from gnuradio import filter
 from gnuradio import gr
 from gnuradio.fft import window
+import sys
 import signal
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
@@ -44,17 +39,18 @@ from gnuradio import uhd
 import time
 from gnuradio.qtgui import Range, RangeWidget
 from PyQt5 import QtCore
+import ModulosEfren
 
 
 
 from gnuradio import qtgui
 
-class PruebaPAM_L1BG1(gr.top_block, Qt.QWidget):
+class ModuladorPWM(gr.top_block, Qt.QWidget):
 
     def __init__(self):
-        gr.top_block.__init__(self, "Modulacion PAM L1BG1", catch_exceptions=True)
+        gr.top_block.__init__(self, "Modulador PWM L1BG1", catch_exceptions=True)
         Qt.QWidget.__init__(self)
-        self.setWindowTitle("Modulacion PAM L1BG1")
+        self.setWindowTitle("Modulador PWM L1BG1")
         qtgui.util.check_set_qss()
         try:
             self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
@@ -72,7 +68,7 @@ class PruebaPAM_L1BG1(gr.top_block, Qt.QWidget):
         self.top_grid_layout = Qt.QGridLayout()
         self.top_layout.addLayout(self.top_grid_layout)
 
-        self.settings = Qt.QSettings("GNU Radio", "PruebaPAM_L1BG1")
+        self.settings = Qt.QSettings("GNU Radio", "ModuladorPWM")
 
         try:
             if StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
@@ -85,28 +81,32 @@ class PruebaPAM_L1BG1(gr.top_block, Qt.QWidget):
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = 100000
-        self.fs = fs = 1e3
-        self.fm = fm = 100
-        self.D = D = 10
-        self.Am = Am = 1
+        self.samp_rate = samp_rate = 200000
+        self.fs = fs = 2e3
+        self.fm = fm = 200
+        self.fc = fc = 5e7
+        self.DC = DC = 0
+        self.A = A = 2
 
         ##################################################
         # Blocks
         ##################################################
 
-        self._fs_range = Range(0, 10e3, 1, 1e3, 200)
-        self._fs_win = RangeWidget(self._fs_range, self.set_fs, "Frecuencia pulsos", "counter_slider", float, QtCore.Qt.Horizontal)
+        self._fs_range = Range(100, 10e3, 10, 2e3, 200)
+        self._fs_win = RangeWidget(self._fs_range, self.set_fs, "Frecuencia diente de sierra", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._fs_win)
-        self._fm_range = Range(0, 10e3, 100, 100, 200)
+        self._fm_range = Range(100, 1e3, 10, 200, 200)
         self._fm_win = RangeWidget(self._fm_range, self.set_fm, "Frecuencia del mensaje", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._fm_win)
-        self._D_range = Range(0, 50, 1, 10, 200)
-        self._D_win = RangeWidget(self._D_range, self.set_D, "Ancho Pulso", "counter_slider", float, QtCore.Qt.Horizontal)
-        self.top_layout.addWidget(self._D_win)
-        self._Am_range = Range(0, 10, 100e-3, 1, 200)
-        self._Am_win = RangeWidget(self._Am_range, self.set_Am, "Amplitud del mensaje", "counter_slider", float, QtCore.Qt.Horizontal)
-        self.top_layout.addWidget(self._Am_win)
+        self._fc_range = Range(5e7, 1e9, 1e6, 5e7, 200)
+        self._fc_win = RangeWidget(self._fc_range, self.set_fc, "Frecuencia portadora", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._fc_win)
+        self._DC_range = Range(-10, 10, 100e-3, 0, 200)
+        self._DC_win = RangeWidget(self._DC_range, self.set_DC, "Nivel de DC de la diente de sierra", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._DC_win)
+        self._A_range = Range(-10, 10, 100e-3, 2, 200)
+        self._A_win = RangeWidget(self._A_range, self.set_A, "Amplitud diente de sierra", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._A_win)
         self.uhd_usrp_sink_0 = uhd.usrp_sink(
             ",".join(("", '')),
             uhd.stream_args(
@@ -119,19 +119,14 @@ class PruebaPAM_L1BG1(gr.top_block, Qt.QWidget):
         self.uhd_usrp_sink_0.set_samp_rate(samp_rate)
         self.uhd_usrp_sink_0.set_time_now(uhd.time_spec(time.time()), uhd.ALL_MBOARDS)
 
-        self.uhd_usrp_sink_0.set_center_freq(50e6, 0)
+        self.uhd_usrp_sink_0.set_center_freq(fc, 0)
         self.uhd_usrp_sink_0.set_antenna("TX/RX", 0)
         self.uhd_usrp_sink_0.set_gain(0, 0)
-        self.rational_resampler_xxx_0 = filter.rational_resampler_fcc(
-                interpolation=(2*samp_rate),
-                decimation=samp_rate,
-                taps=[],
-                fractional_bw=0)
         self.qtgui_time_sink_x_0 = qtgui.time_sink_f(
-            1024, #size
+            4096, #size
             samp_rate, #samp_rate
             "", #name
-            2, #number of inputs
+            3, #number of inputs
             None # parent
         )
         self.qtgui_time_sink_x_0.set_update_time(0.10)
@@ -162,7 +157,7 @@ class PruebaPAM_L1BG1(gr.top_block, Qt.QWidget):
             -1, -1, -1, -1, -1]
 
 
-        for i in range(2):
+        for i in range(3):
             if len(labels[i]) == 0:
                 self.qtgui_time_sink_x_0.set_line_label(i, "Data {0}".format(i))
             else:
@@ -181,7 +176,7 @@ class PruebaPAM_L1BG1(gr.top_block, Qt.QWidget):
             0, #fc
             samp_rate, #bw
             "", #name
-            2,
+            1,
             None # parent
         )
         self.qtgui_freq_sink_x_0.set_update_time(0.10)
@@ -207,7 +202,7 @@ class PruebaPAM_L1BG1(gr.top_block, Qt.QWidget):
         alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
             1.0, 1.0, 1.0, 1.0, 1.0]
 
-        for i in range(2):
+        for i in range(1):
             if len(labels[i]) == 0:
                 self.qtgui_freq_sink_x_0.set_line_label(i, "Data {0}".format(i))
             else:
@@ -218,30 +213,29 @@ class PruebaPAM_L1BG1(gr.top_block, Qt.QWidget):
 
         self._qtgui_freq_sink_x_0_win = sip.wrapinstance(self.qtgui_freq_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_freq_sink_x_0_win)
-        self.blocks_multiply_const_vxx_0 = blocks.multiply_const_cc(0.5)
-        self.analog_sig_source_x_0 = analog.sig_source_f(samp_rate, analog.GR_COS_WAVE, fm, Am, 0, 0)
-        self.Modulacion_PAM_L1BG1_0 = Modulacion_PAM_L1BG1(
-            D=D,
-            fs=fs,
-            samp_rate=samp_rate,
-        )
+        self.blocks_throttle_0 = blocks.throttle(gr.sizeof_float*1, samp_rate,True)
+        self.blocks_float_to_complex_0 = blocks.float_to_complex(1)
+        self.analog_sig_source_x_1 = analog.sig_source_f(samp_rate, analog.GR_CONST_WAVE, fm, 0.5, 0, 0)
+        self.analog_sig_source_x_0 = analog.sig_source_f(samp_rate, analog.GR_SAW_WAVE, fs, A, (DC-A/2), 0)
+        self.ModulosEfren_Compara_0 = ModulosEfren.Compara()
 
 
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.Modulacion_PAM_L1BG1_0, 0), (self.qtgui_freq_sink_x_0, 0))
-        self.connect((self.Modulacion_PAM_L1BG1_0, 0), (self.qtgui_time_sink_x_0, 0))
-        self.connect((self.Modulacion_PAM_L1BG1_0, 0), (self.rational_resampler_xxx_0, 0))
-        self.connect((self.analog_sig_source_x_0, 0), (self.Modulacion_PAM_L1BG1_0, 0))
-        self.connect((self.analog_sig_source_x_0, 0), (self.qtgui_freq_sink_x_0, 1))
-        self.connect((self.analog_sig_source_x_0, 0), (self.qtgui_time_sink_x_0, 1))
-        self.connect((self.blocks_multiply_const_vxx_0, 0), (self.uhd_usrp_sink_0, 0))
-        self.connect((self.rational_resampler_xxx_0, 0), (self.blocks_multiply_const_vxx_0, 0))
+        self.connect((self.ModulosEfren_Compara_0, 0), (self.blocks_float_to_complex_0, 0))
+        self.connect((self.ModulosEfren_Compara_0, 0), (self.qtgui_freq_sink_x_0, 0))
+        self.connect((self.ModulosEfren_Compara_0, 0), (self.qtgui_time_sink_x_0, 1))
+        self.connect((self.analog_sig_source_x_0, 0), (self.ModulosEfren_Compara_0, 1))
+        self.connect((self.analog_sig_source_x_0, 0), (self.qtgui_time_sink_x_0, 2))
+        self.connect((self.analog_sig_source_x_1, 0), (self.blocks_throttle_0, 0))
+        self.connect((self.analog_sig_source_x_1, 0), (self.qtgui_time_sink_x_0, 0))
+        self.connect((self.blocks_float_to_complex_0, 0), (self.uhd_usrp_sink_0, 0))
+        self.connect((self.blocks_throttle_0, 0), (self.ModulosEfren_Compara_0, 0))
 
 
     def closeEvent(self, event):
-        self.settings = Qt.QSettings("GNU Radio", "PruebaPAM_L1BG1")
+        self.settings = Qt.QSettings("GNU Radio", "ModuladorPWM")
         self.settings.setValue("geometry", self.saveGeometry())
         self.stop()
         self.wait()
@@ -253,8 +247,9 @@ class PruebaPAM_L1BG1(gr.top_block, Qt.QWidget):
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
-        self.Modulacion_PAM_L1BG1_0.set_samp_rate(self.samp_rate)
         self.analog_sig_source_x_0.set_sampling_freq(self.samp_rate)
+        self.analog_sig_source_x_1.set_sampling_freq(self.samp_rate)
+        self.blocks_throttle_0.set_sample_rate(self.samp_rate)
         self.qtgui_freq_sink_x_0.set_frequency_range(0, self.samp_rate)
         self.qtgui_time_sink_x_0.set_samp_rate(self.samp_rate)
         self.uhd_usrp_sink_0.set_samp_rate(self.samp_rate)
@@ -264,33 +259,41 @@ class PruebaPAM_L1BG1(gr.top_block, Qt.QWidget):
 
     def set_fs(self, fs):
         self.fs = fs
-        self.Modulacion_PAM_L1BG1_0.set_fs(self.fs)
+        self.analog_sig_source_x_0.set_frequency(self.fs)
 
     def get_fm(self):
         return self.fm
 
     def set_fm(self, fm):
         self.fm = fm
-        self.analog_sig_source_x_0.set_frequency(self.fm)
+        self.analog_sig_source_x_1.set_frequency(self.fm)
 
-    def get_D(self):
-        return self.D
+    def get_fc(self):
+        return self.fc
 
-    def set_D(self, D):
-        self.D = D
-        self.Modulacion_PAM_L1BG1_0.set_D(self.D)
+    def set_fc(self, fc):
+        self.fc = fc
+        self.uhd_usrp_sink_0.set_center_freq(self.fc, 0)
 
-    def get_Am(self):
-        return self.Am
+    def get_DC(self):
+        return self.DC
 
-    def set_Am(self, Am):
-        self.Am = Am
-        self.analog_sig_source_x_0.set_amplitude(self.Am)
+    def set_DC(self, DC):
+        self.DC = DC
+        self.analog_sig_source_x_0.set_offset((self.DC-self.A/2))
+
+    def get_A(self):
+        return self.A
+
+    def set_A(self, A):
+        self.A = A
+        self.analog_sig_source_x_0.set_amplitude(self.A)
+        self.analog_sig_source_x_0.set_offset((self.DC-self.A/2))
 
 
 
 
-def main(top_block_cls=PruebaPAM_L1BG1, options=None):
+def main(top_block_cls=ModuladorPWM, options=None):
 
     if StrictVersion("4.5.0") <= StrictVersion(Qt.qVersion()) < StrictVersion("5.0.0"):
         style = gr.prefs().get_string('qtgui', 'style', 'raster')
